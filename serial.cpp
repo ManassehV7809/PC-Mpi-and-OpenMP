@@ -4,35 +4,45 @@
 
 using namespace std;
 
-#define INF numeric_limits<int>::max()
+#define Infinity numeric_limits<int>::max()
 
-void Dijkstra(const vector<vector<int>>& graph, int source, vector<int>& distance) {
-    int numVertices = graph.size();
 
-    vector<bool> visited(numVertices, false);
-    distance.resize(numVertices, INF);
+void Dijkstra(const vector<vector<int>> &graph, int source, vector<int> &distance) {
+    int numVerts = graph.size();
+    vector<bool> visited(numVerts, false);
 
-    distance[source] = 0;
+    // setting up costs of source's neighbours
+    for (int v = 0; v < numVerts; ++v) {
+        if (v != source) {
+            if (graph[source][v] != Infinity) {
+                distance[v] = graph[source][v]; // Set cost of neighbors with direct edge
+            } else {
+                distance[v] = Infinity; // Set cost of unreachable neighbors to infinity
+            }
+        }
+    }
 
-    for (int i = 0; i < numVertices - 1; i++) {
+    // Main loop
+    for (int i = 0; i < numVerts - 1; ++i) {
         int u = -1;
-        int minDist = INF;
+        int minDist = Infinity;
 
         // Find the vertex with the minimum distance among unvisited vertices
-        for (int v = 0; v < numVertices; v++) {
+        for (int v = 0; v < numVerts; ++v) {
             if (!visited[v] && distance[v] < minDist) {
                 minDist = distance[v];
                 u = v;
             }
         }
 
-        if (u == -1)
+        if (u == -1) {
             break;
+        }
 
         visited[u] = true;
 
         // Relax edges connected to the selected vertex
-        for (int v = 0; v < numVertices; ++v) {
+        for (int v = 0; v < numVerts; ++v) {
             if (!visited[v] && graph[u][v] != INF) {
                 int distThroughU = distance[u] + graph[u][v];
                 distance[v] = min(distance[v], distThroughU);
@@ -41,13 +51,15 @@ void Dijkstra(const vector<vector<int>>& graph, int source, vector<int>& distanc
     }
 }
 
+
+
 int main() {
     // Example graph
     vector<vector<int>> graph ={
-        {0, 2, INF, 1},
-        {2, 0, 1, INF},
-        {INF, 1, 0, 1},
-        {1, INF, 1, 0}
+        {0, 2, Infinity, 1},
+        {2, 0, 1, Infinity},
+        {Infinity, 1, 0, 1},
+        {1, Infinity, 1, 0}
     };
 
     int numVertices = graph.size();
@@ -58,7 +70,7 @@ int main() {
     Dijkstra(graph, source, distance);
 
     cout << "Shortest distances from source vertex " << source << ":" << endl;
-    for (int i = 0; i < numVertices; ++i)
+    for (int i = 0; i < numVertices; i++)
         cout << "Vertex " << i << ": " << distance[i] << endl;
 
     return 0;
