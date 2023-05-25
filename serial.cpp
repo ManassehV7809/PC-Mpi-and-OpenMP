@@ -11,6 +11,9 @@ void Dijkstra(const vector<vector<int>> &graph, int source, vector<int> &distanc
     int numVerts = graph.size();
     vector<bool> visited(numVerts, false);
 
+     // Set the distance of the source vertex to 0
+    distance[source] = 0;
+
     // setting up costs of source's neighbours
     for (int v = 0; v < numVerts; ++v) {
         if (v != source) {
@@ -43,14 +46,13 @@ void Dijkstra(const vector<vector<int>> &graph, int source, vector<int> &distanc
 
         // Relax edges connected to the selected vertex
         for (int v = 0; v < numVerts; ++v) {
-            if (!visited[v] && graph[u][v] != INF) {
+            if (!visited[v] && graph[u][v] != Infinity) {
                 int distThroughU = distance[u] + graph[u][v];
                 distance[v] = min(distance[v], distThroughU);
             }
         }
     }
 }
-
 
 
 int main() {
@@ -65,7 +67,7 @@ int main() {
     int numVertices = graph.size();
     int source = 0;  // Source vertex
 
-    vector<int> distance;
+    vector<int> distance(numVertices, Infinity);  // Resize the distance vector
 
     Dijkstra(graph, source, distance);
 
