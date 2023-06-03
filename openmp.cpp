@@ -2,6 +2,9 @@
 #include <vector>
 #include <limits>
 #include <omp.h>
+#include <time.h>  
+
+
 
 using namespace std;
 
@@ -52,6 +55,13 @@ void Dijkstra(const vector<vector<int>> &graph, int source, vector<int> &distanc
 }
 
 int main() {
+
+clock_t t1,t2;
+
+
+
+
+
     // Example graph
     vector<vector<int>> graph ={
         {0, 2, Infinity, 1},
@@ -65,11 +75,17 @@ int main() {
 
     vector<int> distance(numVertices, Infinity);  // Resize the distance vector
 
+t1 = clock();
     Dijkstra(graph, source, distance);
 
+
+t2 = clock();
+
+double time_dif = (double)(t2 - t1)/CLOCKS_PER_SEC;
     cout << "Shortest distances from source vertex " << source << ":" << endl;
     for (int i = 0; i < numVertices; i++)
         cout << "Vertex " << i << ": " << distance[i] << endl;
+        cout<< time_dif<<endl;
 
     return 0;
 }

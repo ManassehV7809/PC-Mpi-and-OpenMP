@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <limits>
+#include <chrono>
 
 using namespace std;
 
@@ -56,6 +57,10 @@ void Dijkstra(const vector<vector<int>> &graph, int source, vector<int> &distanc
 
 
 int main() {
+
+
+
+
     // Example graph
     vector<vector<int>> graph ={
         {0, 2, Infinity, 1},
@@ -69,11 +74,17 @@ int main() {
 
     vector<int> distance(numVertices, Infinity);  // Resize the distance vector
 
+ auto start = chrono::high_resolution_clock::now();
     Dijkstra(graph, source, distance);
+
+
+ auto end = chrono::high_resolution_clock::now();
+  auto duration = chrono::duration_cast<chrono::milliseconds>(end - start);
 
     cout << "Shortest distances from source vertex " << source << ":" << endl;
     for (int i = 0; i < numVertices; i++)
         cout << "Vertex " << i << ": " << distance[i] << endl;
+           cout << "Time taken: " << duration.count() << " milliseconds" << endl;
 
     return 0;
 }

@@ -1,6 +1,8 @@
 {
     "C_Cpp.errorSquiggles": "disabled",
     "files.associations": {
-        "limits": "cpp"
+        "limits": "cpp",
+        "chrono": "cpp",
+        "algorithm": "cpp"
     }
 }
