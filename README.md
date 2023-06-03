@@ -1,1 +1,1 @@
-# PC-Mpi-and-OpenMP
+# Parallel Computing Assignment
