@@ -114,7 +114,7 @@ int main() {
         for (int i = 0; i < numVertices; i++)
             cout << "Vertex " << i << ": " << distanceOpenMP[i] << endl;
     }
- long long timeTakenChrono;
+ long long timeTakenSerial;
     // Dijkstra's algorithm with chrono
     {
         vector<int> distanceChrono(distance); // Create a copy of distance vector
@@ -123,16 +123,16 @@ int main() {
         DijkstraChrono(graph, source, distanceChrono);
         auto end = chrono::high_resolution_clock::now();
 
-    timeTakenChrono = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+    timeTakenSerial = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
 
         cout << "Shortest distances from source vertex " << source << " (chrono):" << endl;
         for (int i = 0; i < numVertices; i++)
             cout << "Vertex " << i << ": " << distanceChrono[i] << endl;
     }
-float speedUp=timeTakenomp /float(timeTakenChrono);
-    cout << "Execution time (OpenMP): " << timeTakenChrono << " milliseconds" << endl;
-    cout << "Execution time (chrono): " << timeTakenomp<< " milliseconds" << endl;
-      cout << "Speedup: " <<speedUp << " milliseconds" << endl;
+float speedUp=timeTakenomp /float(timeTakenSerial);
+    cout << "Execution time (OpenMP): " << timeTakenSerial << " milliseconds" << endl;
+    cout << "Execution time (Serial): " << timeTakenomp<< " milliseconds" << endl;
+      cout << "Speedup: " <<speedUp << endl;
 
     return 0;
 }
