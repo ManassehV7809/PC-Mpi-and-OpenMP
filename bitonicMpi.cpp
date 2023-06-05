@@ -1,79 +1,136 @@
 #include <iostream>
+#include <algorithm>
+#include <cmath>
 #include <vector>
 #include <chrono>
 #include <mpi.h>
 
 using namespace std;
 
-void compareAndSwap(vector<int>& bitonic_sequence, int low, int high, bool isAscending) {
-    int half = (high - low + 1) / 2;
+void bitonicMerge(vector<int>& bionic_sequence, int startIndex, int count, bool isAscending) {
+    if (count > 1) {
+        int k = count / 2;
 
-    for (int i = low; i < low + half; i++) {
-        if ((bitonic_sequence[i] > bitonic_sequence[i + half]) == isAscending) {
-            swap(bitonic_sequence[i], bitonic_sequence[i + half]);
+        for (int i = startIndex; i < startIndex + k; i++) {
+            int num1 = bionic_sequence[i];
+            int num2 = bionic_sequence[i + k];
+
+            if ((num1 > num2 && isAscending) || (num1 < num2 && !isAscending)) {
+                bionic_sequence[i] = num2;
+                bionic_sequence[i + k] = num1;
+            }
         }
+
+        bitonicMerge(bionic_sequence, startIndex, k, isAscending);
+        bitonicMerge(bionic_sequence, startIndex + k, k, isAscending);
     }
 }
 
-void bitonicMerge(vector<int>& bitonic_sequence, int low, int high, bool isAscending) {
-    if (high - low > 0) {
-        int mid = (high - low + 1) / 2;
+void generateSequence(vector<int>& bionic_sequence) {
+    int groupSize = 2;
+    int HALF = bionic_sequence.size() / 2;
 
-        bitonicMerge(bitonic_sequence, low, low + mid - 1, !isAscending);
-        bitonicMerge(bitonic_sequence, low + mid, high, !isAscending);
+    while (groupSize <= HALF) {
+        bool isAscending = true;
+        if (groupSize == HALF) {
+            bitonicMerge(bionic_sequence, 0, HALF, true);
+            bitonicMerge(bionic_sequence, HALF, HALF, true);
+        }
 
-        compareAndSwap(bitonic_sequence, low, high, isAscending);
+        for (int i = 0; i < bionic_sequence.size(); i = i + groupSize) {
+            bitonicMerge(bionic_sequence, i, groupSize, isAscending);
+            isAscending = !isAscending;
+        }
+
+        groupSize = groupSize * 2;
+    }
+
+    bitonicMerge(bionic_sequence, 0, HALF, true);
+    bitonicMerge(bionic_sequence, HALF, HALF, false);
+
+    for (int i = 0; i < HALF; i = i + 2) {
+        bitonicMerge(bionic_sequence, i, 2, true);
+    }
+
+    for (int i = HALF; i < bionic_sequence.size(); i = i + 2) {
+        bitonicMerge(bionic_sequence, i, 2, false);
     }
 }
 
-void bitonicSort(vector<int>& bitonic_sequence, int low, int high, bool isAscending) {
-    if (high > low) {
-        int mid = (high - low + 1) / 2;
+void bitonicSort(vector<int>& bionic_sequence, int low, int high) {
+    int MAX_IT = low + ((high - low + 1) / 2);
 
-        bitonicSort(bitonic_sequence, low, low + mid - 1, true);
-        bitonicSort(bitonic_sequence, low + mid, high, false);
+    int count = 0;
+    for (int i = low; i < MAX_IT; i++) {
+        int index = MAX_IT + count;
+        int element = bionic_sequence[index];
+        int curr = bionic_sequence[i];
 
-        bitonicMerge(bitonic_sequence, low, high, isAscending);
+        if (curr > element) {
+            bionic_sequence[i] = element;
+            bionic_sequence[index] = curr;
+        }
+        count++;
+    }
+
+    int leftLow = low;
+    int leftHigh = MAX_IT - 1;
+
+    int rightLow = MAX_IT;
+    int rightHigh = high;
+
+    if (leftHigh - leftLow > 0) {
+        bitonicSort(bionic_sequence, leftLow, leftHigh);
+    }
+
+    if (rightHigh - rightLow > 0) {
+        bitonicSort(bionic_sequence, rightLow, rightHigh);
     }
 }
 
-void print(const vector<int>& bitonic_sequence) {
-    for (int i = 0; i < bitonic_sequence.size(); i++) {
-        cout << bitonic_sequence[i] << " ";
+void print(const vector<int>& bionic_sequence) {
+    for (int i = 0; i < bionic_sequence.size(); i++) {
+        cout << bionic_sequence[i] << " ";
     }
-    cout << endl;
+    cout << "\n" << endl;
 }
 
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    int processRank, numProcesses;
-    MPI_Comm_rank(MPI_COMM_WORLD, &processRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &numProcesses);
+    vector<int> bionic_sequence = { 5, 214, 754, 7255, 6, 357, 5, 74, 7, 96, 67, 80, 5, 4, 0, 3 };
+    int sequenceSize = bionic_sequence.size();
 
-    vector<int> bitonic_sequence{ 3, 7, 4, 8, 6, 2, 1, 5 };
-    int sequenceSize = bitonic_sequence.size();
-
-    // Scatter the input sequence to all processes
-    int localSize = sequenceSize / numProcesses;
+    int localSize = sequenceSize / size;
     vector<int> localSequence(localSize);
-    MPI_Scatter(bitonic_sequence.data(), localSize, MPI_INT, localSequence.data(), localSize, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(bionic_sequence.data(), localSize, MPI_INT, localSequence.data(), localSize, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // Perform local bitonic sort
-    bitonicSort(localSequence, 0, localSize - 1, true);
+    cout << "Process " << rank << ": Random input" << endl;
+    print(localSequence);
 
-    // Gather the sorted local sequences back to the root process
+    generateSequence(localSequence);
+
+    cout << "Process " << rank << ": After generating bitonic sequence" << endl;
+    print(localSequence);
+
+    auto start = chrono::high_resolution_clock::now();
+    bitonicSort(localSequence, 0, localSize - 1);
+    auto finish = chrono::high_resolution_clock::now();
+    long long timeTaken = chrono::duration_cast<chrono::nanoseconds>(finish - start).count();
+
     vector<int> sortedSequence(sequenceSize);
     MPI_Gather(localSequence.data(), localSize, MPI_INT, sortedSequence.data(), localSize, MPI_INT, 0, MPI_COMM_WORLD);
 
-    // Root process merges the sorted sequences
-    if (processRank == 0) {
-        bitonicMerge(sortedSequence, 0, sequenceSize - 1, true);
-
-        cout << "Sorted array: ";
+    if (rank == 0) {
+        cout << "Time taken: " << timeTaken << " nanoseconds" << endl;
+        cout << "Sorted array" << endl;
         print(sortedSequence);
     }
 
     MPI_Finalize();
+
     return 0;
 }

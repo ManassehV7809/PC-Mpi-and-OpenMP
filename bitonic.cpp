@@ -5,131 +5,113 @@
 #include <chrono>
 
 using namespace std;
-using namespace std::chrono;
-// Alternate the elements in a group based on the given order
 
-void alternate(vector<int>& bitonic_sequence, vector<int>& group, bool isAscending, int startIndex) {
-    int halfSize = group.size() / 2;
+void bitonicMerge(vector<int>& bionic_sequence, int startIndex, int count, bool isAscending) {
+    if (count > 1) {
+        int k = count / 2;
 
-    for (int i = 0; i < halfSize; i++) {
-        int& num1 = group[i];
-        int& num2 = group[i + halfSize];
+        for (int i = startIndex; i < startIndex + k; i++) {
+            int num1 = bionic_sequence[i];
+            int num2 = bionic_sequence[i + k];
 
-        if ((isAscending && num1 > num2) || (!isAscending && num1 < num2)) {
-            swap(num1, num2);
+            if ((num1 > num2 && isAscending) || (num1 < num2 && !isAscending)) {
+                bionic_sequence[i] = num2;
+                bionic_sequence[i + k] = num1;
+            }
         }
-    }
 
-    for (const auto& num : group) {
-        bitonic_sequence[startIndex++] = num;
+        bitonicMerge(bionic_sequence, startIndex, k, isAscending);
+        bitonicMerge(bionic_sequence, startIndex + k, k, isAscending);
     }
 }
 
-// Sort a group of elements using the alternate ordering
-void step3(vector<int>& bitonic_sequence, vector<int> group, int startIndex) {
-    int halfSize = group.size() / 2;
-
-    for (int i = 0; i < group.size(); i += 2) {
-        int& num1 = group[i];
-        int& num2 = group[i + 1];
-        bool isFirstHalf = i < halfSize;
-
-        if ((isFirstHalf && num1 > num2) || (!isFirstHalf && num1 < num2)) {
-            swap(num1, num2);
-        }
-    }
-
-    for (const auto& num : group) {
-        bitonic_sequence[startIndex++] = num;
-    }
-}
-
-// Generate the bitonic sequence
-void generateSequence(vector<int>& bitonic_sequence) {
+void generateSequence(vector<int>& bionic_sequence) {
     int groupSize = 2;
-    int HALF = bitonic_sequence.size() / 2;
+    int HALF = bionic_sequence.size() / 2;
 
     while (groupSize <= HALF) {
         bool isAscending = true;
-
         if (groupSize == HALF) {
-            vector<int> firstHalf(bitonic_sequence.begin(), bitonic_sequence.begin() + HALF);
-            vector<int> secondHalf(bitonic_sequence.begin() + HALF, bitonic_sequence.end());
-
-            step3(bitonic_sequence, firstHalf, 0);
-            step3(bitonic_sequence, secondHalf, HALF);
+            bitonicMerge(bionic_sequence, 0, HALF, true);
+            bitonicMerge(bionic_sequence, HALF, HALF, true);
         }
 
-        for (int i = 0; i < bitonic_sequence.size(); i += groupSize) {
-            vector<int> group(bitonic_sequence.begin() + i, bitonic_sequence.begin() + i + groupSize);
-            alternate(bitonic_sequence, group, isAscending, i);
+        for (int i = 0; i < bionic_sequence.size(); i = i + groupSize) {
+            bitonicMerge(bionic_sequence, i, groupSize, isAscending);
             isAscending = !isAscending;
         }
 
-        groupSize *= 2;
+        groupSize = groupSize * 2;
     }
 
-    vector<int> leftGroup1(bitonic_sequence.begin(), bitonic_sequence.begin() + HALF / 2);
-    vector<int> leftGroup2(bitonic_sequence.begin() + HALF / 2, bitonic_sequence.begin() + HALF);
-    vector<int> rightGroup1(bitonic_sequence.begin() + HALF, bitonic_sequence.begin() + HALF + HALF / 2);
-    vector<int> rightGroup2(bitonic_sequence.begin() + HALF + HALF / 2, bitonic_sequence.end());
+    bitonicMerge(bionic_sequence, 0, HALF, true);
+    bitonicMerge(bionic_sequence, HALF, HALF, false);
 
-    alternate(bitonic_sequence, leftGroup1, true, 0);
-    alternate(bitonic_sequence, leftGroup2, true, HALF / 2);
-    alternate(bitonic_sequence, rightGroup1, false, HALF);
-    alternate(bitonic_sequence, rightGroup2, false, HALF + HALF / 2);
-
-    for (int i = 0; i < HALF; i += 2) {
-        vector<int> group{ bitonic_sequence[i], bitonic_sequence[i + 1] };
-        alternate(bitonic_sequence, group, true, i);
+    for (int i = 0; i < HALF; i = i + 2) {
+        bitonicMerge(bionic_sequence, i, 2, true);
     }
 
-    for (int i = HALF; i < bitonic_sequence.size(); i += 2) {
-        vector<int> group{ bitonic_sequence[i], bitonic_sequence[i + 1] };
-        alternate(bitonic_sequence, group, false, i);
+    for (int i = HALF; i < bionic_sequence.size(); i = i + 2) {
+        bitonicMerge(bionic_sequence, i, 2, false);
     }
 }
 
-// Perform bitonic sort recursively
-void bitonicSort(vector<int>& bitonic_sequence, int low, int high) {
-    int mid = low + (high - low + 1) / 2;
+void bitonicSort(vector<int>& bionic_sequence, int low, int high) {
+    int MAX_IT = low + ((high - low + 1) / 2);
 
-    for (int i = low; i < mid; i++) {
-        int compareIndex = mid + (i - low);
-        int& current = bitonic_sequence[i];
-        int& compare = bitonic_sequence[compareIndex];
+    int count = 0;
+    for (int i = low; i < MAX_IT; i++) {
+        int index = MAX_IT + count;
+        int element = bionic_sequence[index];
+        int curr = bionic_sequence[i];
 
-        if (current > compare) {
-            swap(current, compare);
+        if (curr > element) {
+            bionic_sequence[i] = element;
+            bionic_sequence[index] = curr;
         }
+        count++;
     }
 
-    if (mid - low > 1) {
-        bitonicSort(bitonic_sequence, low, mid - 1);
+    int leftLow = low;
+    int leftHigh = MAX_IT - 1;
+
+    int rightLow = MAX_IT;
+    int rightHigh = high;
+
+    if (leftHigh - leftLow > 0) {
+        bitonicSort(bionic_sequence, leftLow, leftHigh);
     }
 
-    if (high - mid > 0) {
-        bitonicSort(bitonic_sequence, mid, high);
+    if (rightHigh - rightLow > 0) {
+        bitonicSort(bionic_sequence, rightLow, rightHigh);
     }
+}
+
+void print(const vector<int>& bionic_sequence) {
+    for (int i = 0; i < bionic_sequence.size(); i++) {
+        cout << bionic_sequence[i] << " ";
+    }
+    cout << "\n" << endl;
 }
 
 int main() {
-    vector<int> bitonic_sequence = { 2, 10, 4, 8, 6, 2, 1, 5 };
+    vector<int> bionic_sequence = { 5, 214, 754, 7255, 6, 357, 5, 74, 7, 96, 67, 80, 5, 4, 0, 3 };
 
-    generateSequence(bitonic_sequence);
+    cout << "Random input" << endl;
+    print(bionic_sequence);
 
-    auto start = high_resolution_clock::now();
-    bitonicSort(bitonic_sequence, 0, bitonic_sequence.size() - 1);
-    auto finish = high_resolution_clock::now();
-    long long timeTaken = duration_cast<milliseconds>(finish - start).count();
+    generateSequence(bionic_sequence);
 
-    cout << "Time taken: " << timeTaken << " ms" << endl;
-    cout << "Sorted array:" << endl;
+    cout << "After generating bitonic sequence" << endl;
+    print(bionic_sequence);
 
-    for (int i = 0; i < bitonic_sequence.size(); i++) {
-        cout << bitonic_sequence[i] << " ";
-    }
-    cout << endl;
+    auto start = chrono::high_resolution_clock::now();
+    bitonicSort(bionic_sequence, 0, bionic_sequence.size() - 1);
+    auto finish = chrono::high_resolution_clock::now();
+    long long timeTaken = chrono::duration_cast<chrono::nanoseconds>(finish - start).count();
+    cout << "Time taken: " << timeTaken << " nanoseconds" << endl;
+    cout << "Sorted array" << endl;
+    print(bionic_sequence);
 
     return 0;
 }
