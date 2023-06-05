@@ -1,49 +1,44 @@
-#include <omp.h>
-#include <stdio.h>
+#include <iostream>
+#include <vector>
 
-void prefix_sum_omp(int *array, int n, int *output)
+void parallelScan(const std::vector<int> &input, std::vector<int> &output)
 {
-#pragma omp parallel
-    {
-        int tid = omp_get_thread_num();
-        int start = tid * (n / omp_get_num_threads());
-        int end = (tid + 1) * (n / omp_get_num_threads()) - 1;
+    int size = input.size();
 
-        if (start < n)
-        {
-            output[start] = array[start];
-            for (int i = start + 1; i <= end; i++)
-            {
-                output[i] = output[i - 1] + array[i];
-            }
-        }
+    std::vector<int> prefixSums(size);
+    prefixSums[0] = input[0];
+
+    for (int i = 1; i < size; ++i)
+    {
+        prefixSums[i] = prefixSums[i - 1] + input[i];
+    }
+
+    int prefixSumOffset = prefixSums[0];
+
+    for (int i = 0; i < size; ++i)
+    {
+        output[i] = prefixSums[i] + prefixSumOffset;
     }
 }
 
 int main()
 {
-    int *array = malloc(sizeof(int) * 1000000);
-    for (int i = 0; i < 1000000; i++)
+
+    std::vector<int> input(11);
+    for (int i = 0; i < 11; i++)
     {
-        array[i] = i;
+        input[i] = i;
     }
 
-    int *output = malloc(sizeof(int) * 1000000);
+    std::vector<int> output(11);
 
-    prefix_sum_omp(array, 1000000, output);
+    parallelScan(input, output);
 
-    for (int i = 0; i < 1000000; i++)
+    printf("Prefix Sum: ");
+    for (int i = 0; i < 11; ++i)
     {
-        if (output[i] != i)
-        {
-            return 1;
-        }
+        printf("%d ", output[i]);
     }
-
-    printf("The parallel version of the prefix sum algorithm is correct!\n");
-
-    free(array);
-    free(output);
 
     return 0;
 }
